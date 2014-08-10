@@ -69,7 +69,9 @@ public class Fish {
 
 	}
 
+	//Draws the fish on the memory image via the passed graphics of the memory Image.
 	public void drawFishImage(Graphics memoryGraphics) {
+		// Depending on the velocity (left or right) will draw the relevant image.
 		if (velocity.x < 0) {
 			memoryGraphics.drawImage(image1, location.x, location.y, tank);
 		} else {
