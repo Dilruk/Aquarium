@@ -4,8 +4,11 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.MediaTracker;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Vector;
@@ -22,11 +25,21 @@ public class Aquarium extends Frame implements Runnable {
 	int sleepTime = 110;
 	Vector<Fish> fishes = new Vector<Fish>();
 	boolean runOK = true;
+	Point bubblePoint = new Point();
+	int bubbleRounds = 8;
+	
+	// TODO: devide by 2 is not correct exacly if bubbleRounds not even, have to check
+	Image[] bubbleImages = new Image[bubbleRounds]; 
+	int currentBubbleRound = 0;
+	boolean isBubbleActivated = false;
 
 	public Aquarium() {
 		setTitle("The Aquarium");
 		// Tracks if there are any problem while loading the images.
 		tracker = new MediaTracker(this);
+
+		loadBubbleImages(tracker);
+
 		fishImages[0] = Toolkit.getDefaultToolkit().getImage("leftFish.png");
 		tracker.addImage(fishImages[0], 0);
 
@@ -46,16 +59,6 @@ public class Aquarium extends Frame implements Runnable {
 			System.out.println(e.getMessage());
 		}
 
-		thread = new Thread(this);
-		thread.start();
-
-		this.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent event) {
-				runOK = false;
-				System.exit(0);
-			}
-		});
-
 		// Creates the window component as per the widths and heights of the
 		// background image.
 		setSize(aquariumImage.getWidth(this), aquariumImage.getHeight(this));
@@ -69,8 +72,77 @@ public class Aquarium extends Frame implements Runnable {
 		memoryImage = createImage(getSize().width, getSize().height);
 		memoryGraphics = memoryImage.getGraphics();
 
+		thread = new Thread(this);
+		thread.start();
+
+		this.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent event) {
+				runOK = false;
+				System.exit(0);
+			}
+		});
+
+		this.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent clickEvent) {
+
+				isBubbleActivated = true;
+				bubblePoint = new Point(clickEvent.getX(), clickEvent.getY());
+				currentBubbleRound = bubbleRounds;
+
+			}
+		});
+
 	}
 
+	/**
+	 * @param tracker
+	 * Populates bubble picutres first in ascending and then descending order.
+	 * (oredr of display). Note there can be logic holes need to check extremes :) code in a hurry
+	 */
+	private void loadBubbleImages(MediaTracker tracker) {
+		for (int i = 0; i <= bubbleRounds / 2 ; i++) {
+			bubbleImages[i] = Toolkit.getDefaultToolkit().getImage("bubble" + String.valueOf(i + 1) + ".png");
+			bubbleImages[bubbleRounds - (i + 2)] = Toolkit.getDefaultToolkit().getImage("bubble" + String.valueOf(i + 1) + ".png");
+			tracker.addImage(bubbleImages[i], 0);
+			tracker.addImage(bubbleImages[bubbleRounds - (i + 2)], 0);
+		}
+		
+
+	}
+
+	/*
+	 * public void temp(int x, int y){ System.out.println(x + ":" + y);
+	 * memoryGraphics.drawImage(fishImages[0], x, y, this);
+	 * this.getGraphics().drawImage(memoryImage, 0, 0, this); try {
+	 * thread.sleep(1000); } catch (InterruptedException e) { // TODO
+	 * Auto-generated catch block e.printStackTrace(); } }
+	 */
 	public static void main(String[] args) {
 		new Aquarium();
 
@@ -81,6 +153,9 @@ public class Aquarium extends Frame implements Runnable {
 
 		// This thread will create the fishes and keep them in a vector.
 		for (int i = 0; i < numberOfFish; i++) {
+			// Gets the actual rectangle to play with fish, where all the border
+			// thickness is being removed here using Insets.
+			// Creates the inner rectangle(x, y, width, height)
 			Rectangle edges = new Rectangle(0 + getInsets().left,
 					0 + getInsets().top, getSize().width
 							- (getInsets().left + getInsets().right),
@@ -128,6 +203,17 @@ public class Aquarium extends Frame implements Runnable {
 		for (int i = 0; i < numberOfFish; i++) {
 			((Fish) fishes.elementAt(i)).drawFishImage(memoryGraphics);
 		}
+
+		if (isBubbleActivated) {
+			// Reduces the current bubbleRound by 1 first soon after it's being checked: ds line is 4 u :D
+			if (currentBubbleRound-- > 0) {
+				memoryGraphics.drawImage(bubbleImages[bubbleRounds - (currentBubbleRound + 1)], bubblePoint.x - 75,
+						bubblePoint.y - 75, this);
+			} else {
+				isBubbleActivated = false;
+			}
+		}
+
 		g.drawImage(memoryImage, 0, 0, this);
 
 	}
